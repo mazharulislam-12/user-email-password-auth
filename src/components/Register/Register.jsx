@@ -1,7 +1,8 @@
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, sendEmailVerification, updateProfile } from "firebase/auth";
 import auth from "../firebase/firebase.config";
 import { useState } from "react";
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import { Link } from "react-router-dom";
 
 const Register = () => {
 
@@ -13,17 +14,18 @@ const Register = () => {
 
     const handleRegister = e =>{
         e.preventDefault();
+        const name = e.target.name.value;
         const email = e.target.email.value;
         const password = e.target.password.value;
         const accepted = e.target.terms.checked;
-        console.log(email, password, accepted);
+        console.log(name, email, password, accepted);
 
 
-          //register error
+          //register error and success
           setRegisterError('');
           setSuccess('');
 
-        if (password.length) {
+        if (!password.length) {
             setRegisterError('Password should be at least 6 characters or longer')
             return;
         }
@@ -41,7 +43,21 @@ const Register = () => {
         createUserWithEmailAndPassword(auth, email, password)
         .then(result =>{
             console.log(result.user)
-            setSuccess('user Create Successfully.')
+            setSuccess('user login Successfully.')
+
+            //update profile
+            updateProfile(result.user,{
+                displayName: name,
+                photoURL: "https://example.com/jane-q-user/profile.jpg"
+            })
+            .then(() => console.log('profile update'))
+            .catch()
+
+            //send verification email
+            sendEmailVerification(result.user)
+            .then(()=>{
+                alert('Please check your email and verify your email account')
+            })
 
         })
         .catch(error =>{
@@ -55,6 +71,8 @@ const Register = () => {
             <div className="mx-auto md:w-1/2">
                 <h3 className="text-3xl mb-4">Please Register</h3>
                 <form onSubmit={handleRegister}>
+                    <input className="mb-4 w-full p-2 rounded-lg" type="text" name="name" placeholder="Your Name" id="" required />
+
                     <input className="mb-4 w-full p-2 rounded-lg" type="email" name="email" placeholder="Email Address" id="" required />
                 <br />
                    <div className="relative mb-4">
@@ -85,6 +103,9 @@ const Register = () => {
                 {
                     success && <p className="text-green-600">{success}</p>
                 }
+
+                <p> Already Have an account? please  <Link className="text-orange-500 cursor-pointer" to= "/login">Login</Link> </p>
+
             </div>
 
         </div>
